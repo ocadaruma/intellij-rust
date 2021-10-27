@@ -328,6 +328,9 @@ project(":plugin") {
 
             // Uncomment to enable FUS testing mode
             // jvmArgs("-Dfus.internal.test.mode=true")
+
+            // Uncomment to enable localization testing mode
+            // jvmArgs("-Didea.l10n=true")
         }
 
         withType<PatchPluginXmlTask> {
