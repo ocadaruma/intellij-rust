@@ -1921,4 +1921,28 @@ class RsGenericExpressionTypeInferenceTest : RsTypificationTestBase() {
             a;
         } //^ S
     """)
+
+    // https://github.com/intellij-rust/intellij-rust/issues/5897
+    fun `test issue 5897`() = testExpr("""
+        trait Index<Idx: ?Sized> {
+            type Output: ?Sized;
+            fn index(&self, index: Idx) -> &Self::Output;
+        }
+
+        struct Slice1<T>(T);
+        impl<T> Index<usize> for Slice1<T> {
+            type Output = T;
+            fn index(&self, _: usize) -> &Self::Output { todo!() }
+        }
+
+        struct Slice2;
+        impl Index<usize> for Slice2 {
+            type Output = <Slice1<u32> as Index<usize>>::Output;
+            fn index(&self, _: usize) -> &Self::Output { todo!() }
+        }
+        fn bar(x: Slice2) {
+            let a = *x.index(0);
+            a;
+        } //^ u32
+    """)
 }

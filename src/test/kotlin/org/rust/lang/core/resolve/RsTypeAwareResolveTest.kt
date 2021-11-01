@@ -834,6 +834,24 @@ class RsTypeAwareResolveTest : RsResolveTestBase() {
         }                   //^
     """, NameResolutionTestmarks.selfRelatedTypeSpecialCase)
 
+    fun `test Self-qualified path is resolved to current impl when inapplicable blanket impl exists`() = checkByCode("""
+        trait Trait {
+            type Item;
+            fn foo() -> Self::Item;
+        }
+        trait Bound {}
+        impl<T: Bound> Trait for T {
+            type Item = ();
+            fn foo() -> Self::Item { todo!() }
+        }
+        struct S;
+        impl Trait for S {
+            type Item = i32;
+                //X
+            fn foo() -> Self::Item { todo!() }
+        }                    //^
+    """)
+
     fun `test explicit UFCS-like type-qualified path`() = checkByCode("""
         struct S;
         impl S {
@@ -842,6 +860,21 @@ class RsTypeAwareResolveTest : RsResolveTestBase() {
         fn main () {
             <S>::foo;
         }      //^
+    """)
+
+    fun `test explicit UFCS-like type-qualified path is resolved to correct impl when inapplicable blanket impl exists`() = checkByCode("""
+        trait Trait { type Item; }
+        trait Bound {}
+        impl<I: Bound> Trait for I {
+            type Item = I;
+        }
+        struct S;
+        impl Trait for S {
+            type Item = ();
+        }      //X
+        fn main() {
+            let a: <S as Trait>::Item;
+        }                      //^
     """)
 
     fun `test module wins over primitive type`() = checkByCode("""
@@ -906,5 +939,26 @@ class RsTypeAwareResolveTest : RsResolveTestBase() {
         }      //X
         type Alias1<Q> = <<Q as Trait>::Item as Trait2>::Item;
                                                        //^
+    """)
+
+    fun `test associated type in type alias is resolved to trait when no applicable impl exists`() = checkByCode("""
+        pub trait Trait<T> { type Item; }
+        struct S;               //X
+        impl Trait<i32> for S { type Item = (); }
+        impl Trait<u8> for S { type Item = (); }
+
+        pub type Alias<T> = <S as Trait<T>>::Item;
+                                           //^
+    """)
+
+    fun `test explicit UFCS-like generic type-qualified path to associated function`() = checkByCode("""
+        trait Foo { fn foo(&self); }
+                     //X
+        impl<T> Foo for T { fn foo(&self) {} }
+        trait Bar { fn foo(&self); }
+        impl<T> Bar for T { fn foo(&self) {} }
+        fn baz<T: Foo+Bar>(t: T) {
+            <T as Foo>::foo(&t);
+        }             //^
     """)
 }

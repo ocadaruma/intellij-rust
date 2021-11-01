@@ -550,7 +550,7 @@ class ImplLookup(
         selectStrictWithoutConfirm(ref, recursionDepth).isOk()
 
     /** Same as [select], but strictly evaluates all obligations (checks trait bounds) of impls */
-    private fun selectStrict(ref: TraitRef, recursionDepth: Int = 0): SelectionResult<Selection> =
+    fun selectStrict(ref: TraitRef, recursionDepth: Int = 0): SelectionResult<Selection> =
         selectStrictWithoutConfirm(ref, recursionDepth).map { confirmCandidate(ref, it, recursionDepth) }
 
     private fun selectStrictWithoutConfirm(ref: TraitRef, recursionDepth: Int): SelectionResult<SelectionCandidate> {
